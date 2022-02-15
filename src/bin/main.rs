@@ -67,7 +67,10 @@ fn handle_connection(mut stream: TcpStream, file_structure: Vec<String>) {
         let contents = fs::read(filename);
         let contents = match contents {
             Ok(contents ) => contents,
-            Err(error) => panic!("Problem opening file: {:?}", error)
+            Err(error) => {
+                println!("Problem opening file: {:?}", error);
+                Vec::<u8>::new()
+            }
         };
 
         let response = format!(
@@ -82,7 +85,10 @@ fn handle_connection(mut stream: TcpStream, file_structure: Vec<String>) {
         let contents = fs::read_to_string(filename);
         let contents = match contents {
             Ok(contents) => contents,
-            Err(error) => panic!("Problem opening file: {:?}", error)
+            Err(error) => {
+                println!("Problem opening file: {:?}", error);
+                String::new()
+            }
         };
 
         let response = format!(
