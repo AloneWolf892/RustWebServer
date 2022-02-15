@@ -78,6 +78,8 @@ fn handle_connection(mut stream: TcpStream, file_structure: Vec<String>) {
             status_line, &contents[..].len()
         );
 
+        println!("{response}");
+
         stream.write(response.as_bytes()).unwrap();
         stream.write(&contents[..]).unwrap();
         stream.flush().unwrap();
@@ -92,10 +94,14 @@ fn handle_connection(mut stream: TcpStream, file_structure: Vec<String>) {
         };
 
         let response = format!(
-            "{}\r\nContent-Length: {}\r\n\r\n{}",
-            status_line, contents.len(), contents
+            "{}\r\nContent-Length: {}\r\n\r\n",
+            status_line, contents.len()
         );
+
+        println!("{response}");
+
         stream.write(response.as_bytes()).unwrap();
+        stream.write(contents.as_bytes()).unwrap();
         stream.flush().unwrap();
     }
 }
