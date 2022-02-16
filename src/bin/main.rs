@@ -44,6 +44,8 @@ fn handle_connection(mut stream: TcpStream, file_structure_and_root: (Vec<String
     let mut status_line = "HTTP/1.1 200 OK";
     let mut filename = format!("{root}/index.html");
 
+    // println!("Incoming request from {}", stream.local_addr().unwrap());
+
     stream.read(&mut buffer).unwrap();
 
     for entry in (file_structure.iter_mut()).rev() {
@@ -63,11 +65,12 @@ fn handle_connection(mut stream: TcpStream, file_structure_and_root: (Vec<String
 
         // println!("{site}");
 
-        let site = site.as_bytes();
+        let buffer_site = site.as_bytes();
 
-        if buffer.starts_with(site) {
+        if buffer.starts_with(buffer_site) {
             status_line = "HTTP/1.1 200 OK";
             filename = format!("{entry}");
+            println!("{}", site);
             break;
         } else {
             status_line = "HTTP/1.1 404 NOT FOUND";
@@ -78,11 +81,11 @@ fn handle_connection(mut stream: TcpStream, file_structure_and_root: (Vec<String
     // println!("{filename}");
 
     if filename.contains(".png") || filename.contains(".jpg") || filename.contains(".gif") || filename.contains(".jpeg") {
-        let contents = fs::read(filename);
+        let contents = fs::read(&filename);
         let contents = match contents {
             Ok(contents ) => contents,
             Err(error) => {
-                println!("Problem opening file: {:?}", error);
+                println!("Problem opening the file: {:?} ; Error: {:?}", &filename, error);
                 Vec::<u8>::new()
             }
         };
@@ -98,11 +101,11 @@ fn handle_connection(mut stream: TcpStream, file_structure_and_root: (Vec<String
         stream.write(&contents[..]).unwrap();
         stream.flush().unwrap();
     } else {
-        let contents = fs::read_to_string(filename);
+        let contents = fs::read_to_string(&filename);
         let contents = match contents {
             Ok(contents) => contents,
             Err(error) => {
-                println!("Problem opening file: {:?}", error);
+                println!("Problem opening the file: {:?} ; Error: {:?}", &filename, error);
                 String::new()
             }
         };
