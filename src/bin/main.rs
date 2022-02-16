@@ -24,44 +24,58 @@ fn main() {
     let pool = ThreadPool::new(4);
     
     for stream in listener.incoming() {
-        let file_structure = directory_list(String::from(root));
+        let file_structure_and_root = directory_list(String::from(root));
         let stream = stream.unwrap();
 
         pool.execute(|| {
-            handle_connection(stream, file_structure);
+            handle_connection(stream, file_structure_and_root);
         });
     }
 }
 
-fn handle_connection(mut stream: TcpStream, file_structure: Vec<String>) {
+fn handle_connection(mut stream: TcpStream, file_structure_and_root: (Vec<String>, String)) {
 
-    let mut file_structure = file_structure;
+    let (mut file_structure, root) = file_structure_and_root;
+
+    // println!("{:?}", file_structure);
 
     let mut buffer = [0; 1024];
 
     let mut status_line = "HTTP/1.1 200 OK";
-    let mut filename = "websiteroot/index.html";
+    let mut filename = format!("{root}/index.html");
 
     stream.read(&mut buffer).unwrap();
 
     for entry in (file_structure.iter_mut()).rev() {
+        
+        // println!("{}", entry);
 
         if entry.contains("404.html") {
             continue;
         }
-        let mut site = entry.replace("websiteroot/", "").replace("index.html", "");
+
+        let mut temp_root = root.clone();
+
+        temp_root = temp_root + "/";
+
+        let mut site = entry.replace(&temp_root, "").replace("index.html", "");
         site = format!("GET /{site} HTTP/1.1\r\n");
+
+        // println!("{site}");
+
         let site = site.as_bytes();
 
         if buffer.starts_with(site) {
             status_line = "HTTP/1.1 200 OK";
-            filename = entry;
+            filename = format!("{entry}");
             break;
         } else {
             status_line = "HTTP/1.1 404 NOT FOUND";
-            filename = "websiteroot/404.html";
+            filename = format!("{root}/404.html");
         }
     }
+
+    // println!("{filename}");
 
     if filename.contains(".png") || filename.contains(".jpg") || filename.contains(".gif") || filename.contains(".jpeg") {
         let contents = fs::read(filename);
@@ -78,7 +92,7 @@ fn handle_connection(mut stream: TcpStream, file_structure: Vec<String>) {
             status_line, &contents[..].len()
         );
 
-        println!("{response}");
+        // println!("{response}");
 
         stream.write(response.as_bytes()).unwrap();
         stream.write(&contents[..]).unwrap();
@@ -98,7 +112,7 @@ fn handle_connection(mut stream: TcpStream, file_structure: Vec<String>) {
             status_line, contents.len()
         );
 
-        println!("{response}");
+        // println!("{response}");
 
         stream.write(response.as_bytes()).unwrap();
         stream.write(contents.as_bytes()).unwrap();

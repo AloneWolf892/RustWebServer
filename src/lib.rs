@@ -1,7 +1,7 @@
 use std::{thread, sync::{mpsc, Arc, Mutex}};
 use walkdir::WalkDir;
 
-pub fn directory_list(root: String) -> Vec<String> {
+pub fn directory_list(root: String) -> (Vec<String>, String) {
     let mut file_structure: Vec<String> = Vec::new(); 
     let mut reduced_file_structure: Vec<String> = Vec::new();
     for entry in WalkDir::new(&root) {
@@ -18,7 +18,7 @@ pub fn directory_list(root: String) -> Vec<String> {
         }
     }
 
-    reduced_file_structure
+    (reduced_file_structure, root)
 
 }
 
@@ -90,7 +90,7 @@ impl Worker {
 
             match message {
                 Message::NewJob(job) => {
-                    //println!("Worker {} got a job; executing.", id);
+                    println!("Worker {} got a job; executing.", id);
                     job();
                 },
                 Message::Terminate => {
